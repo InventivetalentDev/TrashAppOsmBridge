@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<osm>
+    <changeset generator="TrashApp">
+        <tag k="comment" v="__comment__" />
+        <tag k="created_by" v="TrashApp" />
+    </changeset>
+</osm>

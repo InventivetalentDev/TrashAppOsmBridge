@@ -1,0 +1,3 @@
+<node id="__id__" lat="__lat__" lon="__lon__" changeset="__changeset__">
+    <tag k="amenity" v="__amenity__"/>
+</node>
