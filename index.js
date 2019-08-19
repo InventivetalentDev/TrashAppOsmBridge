@@ -20,7 +20,7 @@ app.use(session({
 }));
 app.use(bodyParser.json());
 
-const port = 3000;
+const port = 8689;
 
 
 app.get('/', (req, res) => {
