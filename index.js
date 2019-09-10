@@ -385,8 +385,11 @@ app.post("/create", (req, res) => {
 
 });
 
+if (vars.dev) {
+    console.warn("RUNNING IN DEV MODE!");
+}
 
-app.listen(port, () => console.log(`Example app listening on port ${ port }!`))
+app.listen(port, () => console.log(`OsmBridge listening on port ${ port }!`));
 
 process.on('uncaughtException', function (err) {
     console.log('Caught exception: ');
