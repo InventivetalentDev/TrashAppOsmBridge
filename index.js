@@ -1,9 +1,9 @@
 const vars = require("./vars");
-require("./logToFile");
+// require("./logToFile");
 
 const fs = require('fs');
 const request = require("request");
-require('request-debug')(request);
+// require('request-debug')(request);
 const qs = require('querystring');
 const parseXmlString = require("xml2js").parseString;
 
@@ -19,6 +19,9 @@ app.use(session({
     cookie: {secure: true}
 }));
 app.use(bodyParser.json());
+
+let swStats = require('swagger-stats');
+app.use(swStats.getMiddleware(vars.swagger));
 
 const port = 8689;
 
@@ -60,15 +63,13 @@ app.get('/', (req, res) => {
                 return;
             }
 
-            parseXmlString(body,function (err,parsed) {
+            parseXmlString(body, function (err, parsed) {
                 sendRes(true, parsed);
             });
         });
-    }else{
+    } else {
         sendRes(false, null);
     }
-
-
 
 
 });
@@ -106,7 +107,7 @@ app.get("/auth", (req, res) => {
 
 app.get("/callback", (req, res) => {
     if (!req.session.oauth_token_secret) {
-        res.status(401).json({error:"invalid session (missing secret)"});
+        res.status(401).json({error: "invalid session (missing secret)"});
         return;
     }
     if (!req.query.oauth_token) {
@@ -118,7 +119,7 @@ app.get("/callback", (req, res) => {
         return;
     }
     request({
-        method:"POST",
+        method: "POST",
         url: vars.accessUrl,
         oauth: {
             consumer_key: vars.osmKey, // Supply the consumer key, consumer secret, access token and access secret for every request to the API.
@@ -133,7 +134,7 @@ app.get("/callback", (req, res) => {
             res.status(500).json({error: "unexpected error occurred"});
             return;
         }
-        console.log(body)
+        console.debug(body)
         if (rs.statusCode < 200 || rs.statusCode > 230) {
             res.status(rs.statusCode).json({error: "got non-ok status code from OSM (auth callback)", code: rs.statusCode, msg: body});
             return;
@@ -227,14 +228,14 @@ app.post("/create", (req, res) => {
         res.status(400).json({error: "missing comment"});
         return;
     }
-    console.log("\"" + comment + "\"");
+    console.log("Comment: \"" + comment + "\"");
 
     let trashcans = req.body.trashcans;
     if (!trashcans || trashcans.length === 0) {
         res.status(400).json({error: "trashcans cannot be missing/empty"});
         return;
     }
-    console.log(trashcans);
+    console.log("Trashcans: " + JSON.stringify(trashcans));
     console.log(" ");
 
     fs.readFile("./create_changeset.xml", "utf8", (err, createChangesetData) => {
@@ -271,7 +272,7 @@ app.post("/create", (req, res) => {
                 return;
             }
             if (rs.statusCode < 200 || rs.statusCode > 230) {
-                res.status(rs.statusCode).json({error: "got non-ok status code from OSM (create changeset)",code:rs.statusCode, msg: body});
+                res.status(rs.statusCode).json({error: "got non-ok status code from OSM (create changeset)", code: rs.statusCode, msg: body});
                 return;
             }
 
@@ -298,6 +299,10 @@ app.post("/create", (req, res) => {
                         if (!trashcan.amenity) {
                             trashcan.amenity = "waste_basket";
                         }
+                        if (!trashcan.lat || !trashcan.lon) {
+                            console.warn("Missing lat/lon!");
+                            continue;
+                        }
                         let node = createNodeData
                             .replace(/__id__/gi, (-1 - i))
                             .replace(/__lat__/gi, trashcan.lat)
@@ -305,6 +310,12 @@ app.post("/create", (req, res) => {
                             .replace(/__amenity__/gi, trashcan.amenity)
                             .replace(/__changeset__/gi, changesetId);
                         createNodes.push(node);
+                    }
+
+                    if (createNodes.length === 0) {
+                        console.warn("Parsed array is empty! Aborting!");
+                        res.status(400).json({error: "Failed to parse any of the submitted trashcans"});
+                        return;
                     }
 
 
@@ -331,7 +342,7 @@ app.post("/create", (req, res) => {
                             return;
                         }
                         if (rs.statusCode < 200 || rs.statusCode > 230) {
-                            res.status(rs.statusCode).json({error: "got non-ok status code from OSM (upload changeset)", code:rs.statusCode,msg: body});
+                            res.status(rs.statusCode).json({error: "got non-ok status code from OSM (upload changeset)", code: rs.statusCode, msg: body});
                             return;
                         }
 
@@ -356,7 +367,7 @@ app.post("/create", (req, res) => {
                                 return;
                             }
                             if (rs.statusCode < 200 || rs.statusCode > 230) {
-                                res.status(rs.statusCode).json({error: "got non-ok status code from OSM (close changeset)", code:rs.statusCode, msg: body});
+                                res.status(rs.statusCode).json({error: "got non-ok status code from OSM (close changeset)", code: rs.statusCode, msg: body});
                                 return;
                             }
 
