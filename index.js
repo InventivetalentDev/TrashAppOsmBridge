@@ -222,6 +222,8 @@ app.post("/create", (req, res) => {
     }
 
     console.log("New /create request");
+    let userAgent = req.header("User-Agent");
+    console.log(userAgent);
 
     let comment = req.body.comment;
     if (!comment) {
