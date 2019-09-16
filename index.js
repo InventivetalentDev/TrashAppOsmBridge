@@ -309,14 +309,14 @@ app.post("/create", (req, res) => {
                         let extraTag = "";
                         if (trashcan.amenity === "waste_basket") {
                             if (trashcan.waste && typeof trashcan.waste === "string") {
-                                extraTag = '<tag k="waste" v="' + trashcan.waste + '">';
+                                extraTag = '<tag k="waste" v="' + trashcan.waste + '"/>';
                             }
                         }
                         if (trashcan.amenity === "recycling") {
                             if (trashcan.recycling && typeof trashcan.recycling === "string") {
                                 let recyclingSplit = trashcan.recycling.split(',');
                                 for (let j = 0; j < recyclingSplit.length; j++) {
-                                    extraTag += '<tag k="recycling:' + recyclingSplit[j] + '" v="yes">\n';
+                                    extraTag += '<tag k="recycling:' + recyclingSplit[j] + '" v="yes"/>\n';
                                 }
                             }
                         }
