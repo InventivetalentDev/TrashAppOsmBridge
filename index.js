@@ -151,7 +151,6 @@ app.get("/callback", (req, res) => {
         }
 
         let bodyObject = qs.parse(body);
-        console.log(bodyObject);
         req.session.access_token = bodyObject.oauth_token; // Save the access token and access secret in the user's session.
         req.session.access_token_secret = bodyObject.oauth_token_secret;
 
@@ -263,10 +262,7 @@ app.post("/create", (req, res) => {
         console.log(createChangeset);
 
 
-        console.log(req.session.access_token)
-        console.log(req.session.access_token_secret)
-
-        // Create Changeset
+r        // Create Changeset
         request({
             url: vars.osmUrl + "/api/0.6/changeset/create",
             method: "PUT",
