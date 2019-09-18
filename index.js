@@ -30,13 +30,23 @@ app.get('/', (req, res) => {
 
 
     function sendRes(authenticated, userInfo) {
+        if (userInfo) {
+            try {
+                let user = userInfo.osm.user[0];
+                req.session.osmUserId = user["$"].id;
+                req.session.osmUserName = user["$"].display_name;
+            } catch (e) {
+                console.warn(e);
+            }
+        }
+
         res.json({
             msg: "Hello World!",
             dev: vars.dev,
             time: new Date().getTime(),
             authenticated: authenticated,
             user: userInfo
-        })
+        });
     }
 
     if (req.session.access_token && req.session.access_token_secret) {
@@ -222,6 +232,7 @@ app.post("/create", (req, res) => {
     }
 
     console.log("New /create request");
+    console.log(req.session.osmUserName + " (" + req.session.osmUserId + ")");
     let userAgent = req.header("User-Agent");
     console.log(userAgent);
 
