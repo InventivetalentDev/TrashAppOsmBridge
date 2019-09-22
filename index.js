@@ -230,6 +230,8 @@ app.post("/create", (req, res) => {
         return;
     }
 
+    console.log(" ");
+    console.log("==============================")
     console.log("New /create request");
     console.log(req.session.osmUserName + " (" + req.session.osmUserId + ")");
     let userAgent = req.header("User-Agent");
@@ -262,7 +264,7 @@ app.post("/create", (req, res) => {
         console.log(createChangeset);
 
 
-r        // Create Changeset
+        // Create Changeset
         request({
             url: vars.osmUrl + "/api/0.6/changeset/create",
             method: "PUT",
@@ -398,8 +400,10 @@ r        // Create Changeset
                             }
 
                             console.log("Closed changeset #" + changesetId);
+                            console.log("==============================")
 
                             res.json({msg: "success", dev: vars.dev});
+                            console.log(" ");
                         });
                     });
                 });
