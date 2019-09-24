@@ -74,6 +74,11 @@ app.get('/', (req, res) => {
             }
 
             parseXmlString(body, function (err, parsed) {
+                if (err) {
+                    console.warn(err);
+                    res.status(500).json({error: "failed to parse xml response"});
+                    return;
+                }
                 sendRes(true, parsed);
             });
         });
@@ -377,33 +382,52 @@ app.post("/create", (req, res) => {
                         console.log("Uploaded data for changeset #" + changesetId + " with " + createNodes.length + " additions");
                         console.log(body);
 
-                        // Close Changeset
-                        request({
-                            url: vars.osmUrl + "/api/0.6/changeset/" + changesetId + "/close",
-                            method: "PUT",
-                            oauth: {
-                                consumer_key: vars.osmKey, // Supply the consumer key, consumer secret, access token and access secret for every request to the API.
-                                consumer_secret: vars.osmSecret,
-                                token: req.session.access_token,
-                                token_secret: req.session.access_token_secret
-                            },
-                            headers: {"Content-Type": "text/xml"}
-                        }, function (err, rs, body) {
+                        parseXmlString(body, function (err, parsed) {
                             if (err) {
-                                console.error(err);
-                                res.status(500).json({error: "unexpected error occurred while closing changeset"});
+                                console.warn(err);
+                                res.status(500).json({error: "failed to parse xml response"});
                                 return;
                             }
-                            if (rs.statusCode < 200 || rs.statusCode > 230) {
-                                res.status(rs.statusCode).json({error: "got non-ok status code from OSM (close changeset)", code: rs.statusCode, msg: body});
-                                return;
+                            console.log(JSON.stringify(parsed));
+
+                            let newNodeIds = [];
+                            try {
+                                let nodes = parsed.diffResult["$"].node;
+                                for (let n = 0; n < nodes.length; n++) {
+                                    newNodeIds.push(nodes[n]["$"].new_id);
+                                }
+                            } catch (e) {// just being careful
+                                console.warn(e);
                             }
 
-                            console.log("Closed changeset #" + changesetId);
-                            console.log("==============================")
+                            // Close Changeset
+                            request({
+                                url: vars.osmUrl + "/api/0.6/changeset/" + changesetId + "/close",
+                                method: "PUT",
+                                oauth: {
+                                    consumer_key: vars.osmKey, // Supply the consumer key, consumer secret, access token and access secret for every request to the API.
+                                    consumer_secret: vars.osmSecret,
+                                    token: req.session.access_token,
+                                    token_secret: req.session.access_token_secret
+                                },
+                                headers: {"Content-Type": "text/xml"}
+                            }, function (err, rs, body) {
+                                if (err) {
+                                    console.error(err);
+                                    res.status(500).json({error: "unexpected error occurred while closing changeset"});
+                                    return;
+                                }
+                                if (rs.statusCode < 200 || rs.statusCode > 230) {
+                                    res.status(rs.statusCode).json({error: "got non-ok status code from OSM (close changeset)", code: rs.statusCode, msg: body});
+                                    return;
+                                }
 
-                            res.json({msg: "success", dev: vars.dev});
-                            console.log(" ");
+                                console.log("Closed changeset #" + changesetId);
+                                console.log("==============================")
+
+                                res.json({msg: "success", dev: vars.dev, changeset: changesetId, nodes: newNodeIds});
+                                console.log(" ");
+                            });
                         });
                     });
                 });
