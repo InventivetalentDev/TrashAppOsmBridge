@@ -20,14 +20,17 @@ app.use(session({
 }));
 app.use(bodyParser.json());
 
-let swStats = require('swagger-stats');
-app.use(swStats.getMiddleware(vars.swagger));
+// let swStats = require('swagger-stats');
+// app.use(swStats.getMiddleware(vars.swagger));
+
+console.log("hi!")
 
 const port = 8689;
 
 
-app.get('/', (req, res) => {
 
+app.get('/', (req, res) => {
+    console.log("GET /")
 
     function sendRes(authenticated, userInfo) {
         if (userInfo) {
@@ -92,6 +95,7 @@ app.get('/', (req, res) => {
 /// Auth Stuff
 
 app.get("/auth", (req, res) => {
+    console.log("GET /auth")
     // https://wiki.openstreetmap.org/wiki/OAuth_Server_side_Node.js_examples
 
     request.post({
@@ -121,6 +125,7 @@ app.get("/auth", (req, res) => {
 });
 
 app.get("/callback", (req, res) => {
+    console.log("GET /callback")
     if (!req.session.oauth_token_secret) {
         res.status(401).json({error: "invalid session (missing secret)"});
         return;
@@ -165,6 +170,7 @@ app.get("/callback", (req, res) => {
 });
 
 app.get("/appAuthCallback", (req, res) => {
+    console.log("GET /appAuthCallback")
     res.send("<html>" +
         "   <head>" +
         "       <script>" +
@@ -180,6 +186,7 @@ app.get("/appAuthCallback", (req, res) => {
 });
 
 app.get("/userinfo", (req, res) => {
+    console.log("GET /userinfo")
     request({
         url: vars.osmUrl + "/api/0.6/user/details",
         method: "GET",
@@ -225,6 +232,7 @@ app.get("/userinfo", (req, res) => {
 }
  */
 app.post("/create", (req, res) => {
+    console.log("POST /create")
     if (!req.session.access_token || !req.session.access_token_secret) {
         res.status(403).json({error: "Not authorized"});
         return;
