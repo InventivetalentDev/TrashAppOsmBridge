@@ -27,6 +27,7 @@ console.log("hi!")
 
 const port = 8689;
 
+app.use("/.well-known", express.static(".well-known"));
 
 
 app.get('/', (req, res) => {
