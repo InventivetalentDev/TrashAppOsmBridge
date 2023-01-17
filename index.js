@@ -448,6 +448,27 @@ app.post("/create", (req, res) => {
 
 });
 
+// proxy for overpass
+app.post("/interpreter", (req, res) => {
+    console.log("proxying interpreter from " + req.header("User-Agent") + " " + getIp(req));
+    req.pipe(request({
+            method: "POST",
+            url: "https://www.overpass-api.de/api/interpreter"
+        })
+            .on('response', function (response) {
+                console.log(response.statusCode) // 200
+            })
+            .on('error', function (err) {
+                console.warn("interpreter error");
+                console.error(err)
+            })
+    ).pipe(res)
+})
+
+function getIp(req) {
+    return req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.get("x-real-ip") || req.connection.remoteAddress || req.ip;
+}
+
 if (vars.dev) {
     console.warn("RUNNING IN DEV MODE!");
 }
