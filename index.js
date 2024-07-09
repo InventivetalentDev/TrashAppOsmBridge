@@ -187,6 +187,7 @@ app.get("/callback1", (req, res) => {
 app.get("/callback2", (req, res) => {
     console.log("GET /callback2 - " + req.header("User-Agent") + " " + getIp(req))
     if (!req.query.code) {
+        console.warn("Missing code!");
         res.redirect("https://osmbridge.trashapp.cc/appAuthErrorCallback?message=missing%20code");
         return;
     }
