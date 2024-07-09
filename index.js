@@ -31,7 +31,7 @@ app.use("/.well-known", express.static(".well-known"));
 
 
 app.get('/', (req, res) => {
-    console.log("GET /")
+    console.log("GET / - " + req.header("User-Agent") + " " + getIp(req))
 
     function sendRes(authenticated, userInfo) {
         if (userInfo) {
@@ -130,7 +130,7 @@ app.get("/auth1", (req, res) => {
 });
 
 app.get("/auth", (req, res) => {
-    console.log("GET /auth")
+    console.log("GET /auth - " + req.header("User-Agent") + " " + getIp(req))
 
     res.redirect(vars.auth2Url + "?client_id=" + vars.osmClientId + "&redirect_uri=" + encodeURIComponent(vars.callback2Url) + "&response_type=code&scope=read_prefs%20write_api");
 });
@@ -185,7 +185,11 @@ app.get("/callback1", (req, res) => {
 });
 
 app.get("/callback2", (req, res) => {
-    console.log("GET /callback2")
+    console.log("GET /callback2 - " + req.header("User-Agent") + " " + getIp(req))
+    if (!req.query.code) {
+        res.redirect("https://osmbridge.trashapp.cc/appAuthErrorCallback?message=missing%20code");
+        return;
+    }
     request({
         method: "POST",
         url: vars.token2Url,
@@ -199,16 +203,18 @@ app.get("/callback2", (req, res) => {
     }, (err, rs, body) => {
         if (err) {
             console.error(err);
-            res.status(500).json({ error: "unexpected error occurred" });
+            // res.status(500).json({ error: "unexpected error occurred" });
+            res.redirect("https://osmbridge.trashapp.cc/appAuthErrorCallback?message=unexpected%20error");
             return;
         }
         console.debug(body)
         if (rs.statusCode < 200 || rs.statusCode > 230) {
-            res.status(rs.statusCode).json({
-                error: "got non-ok status code from OSM (oauth2 callback)",
-                code: rs.statusCode,
-                msg: body
-            });
+            // res.status(rs.statusCode).json({
+            //     error: "got non-ok status code from OSM (oauth2 callback)",
+            //     code: rs.statusCode,
+            //     msg: body
+            // });
+            res.redirect("https://osmbridge.trashapp.cc/appAuthErrorCallback?message=non-ok%20status%20code%20(" + rs.statusCode + ")");
             return;
         }
 
@@ -221,7 +227,7 @@ app.get("/callback2", (req, res) => {
 });
 
 app.get("/appAuthCallback", (req, res) => {
-    console.log("GET /appAuthCallback")
+    console.log("GET /appAuthCallback - " + req.header("User-Agent") + " " + getIp(req))
     res.send("<html>" +
         "   <head>" +
         "       <script>" +
@@ -236,8 +242,25 @@ app.get("/appAuthCallback", (req, res) => {
         "</html>")
 });
 
+app.get("/appAuthErrorCallback", (req, res) => {
+    console.log("GET /appAuthErrorCallback - " + req.header("User-Agent") + " " + getIp(req))
+    res.send("<html>" +
+        "   <head>" +
+        "       <body>" +
+        "           <h1>Authorization failed</h1>" +
+        "           <p>Please make sure to allow access to OpenStreetMap in order to use TrashApp's map editing functionality.</p>" +
+        "           <pre>" + (req.query.message || 'unknown error') + "</pre>" +
+        "           <a href='/appAuthCallback'>Go back to TrashApp</a>"+
+        "       </body>" +
+        "       <script>" +
+        "       setTimeout(function(){window.local.href='/appAuthCallback'}, 60000);" +
+        "       </script>" +
+        "   </head>" +
+        "</html>")
+});
+
 app.get("/userinfo", (req, res) => {
-    console.log("GET /userinfo")
+    console.log("GET /userinfo - " + req.header("User-Agent") + " " + getIp(req))
     request({
         url: vars.osmUrl + "/api/0.6/user/details",
         method: "GET",
@@ -282,7 +305,7 @@ app.get("/userinfo", (req, res) => {
 }
  */
 app.post("/create", (req, res) => {
-    console.log("POST /create")
+    console.log("POST /create - " + req.header("User-Agent") + " " + getIp(req))
     if (!req.session.access_token || !req.session.access_token_secret) {
         res.status(403).json({ error: "Not authorized" });
         return;
