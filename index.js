@@ -16,7 +16,7 @@ app.use(session({
     secret: vars.sessionSecret,
     resave: false,
     saveUninitialized: true,
-    cookie: {secure: true}
+    cookie: { secure: true }
 }));
 app.use(bodyParser.json());
 
@@ -69,18 +69,22 @@ app.get('/', (req, res) => {
         }, (err, rs, body) => {
             if (err) {
                 console.error(err);
-                res.status(500).json({error: "unexpected error occurred"});
+                res.status(500).json({ error: "unexpected error occurred" });
                 return;
             }
             if (rs.statusCode < 200 || rs.statusCode > 230) {
-                res.status(rs.statusCode).json({error: "got non-ok status code from OSM (userinfo)", coed: rs.statusCode, msg: body});
+                res.status(rs.statusCode).json({
+                    error: "got non-ok status code from OSM (userinfo)",
+                    coed: rs.statusCode,
+                    msg: body
+                });
                 return;
             }
 
             parseXmlString(body, function (err, parsed) {
                 if (err) {
                     console.warn(err);
-                    res.status(500).json({error: "failed to parse xml response"});
+                    res.status(500).json({ error: "failed to parse xml response" });
                     return;
                 }
                 sendRes(true, parsed);
@@ -109,11 +113,15 @@ app.get("/auth", (req, res) => {
     }, (err, rs, body) => {
         if (err) {
             console.error(err);
-            res.status(500).json({error: "unexpected error occurred"});
+            res.status(500).json({ error: "unexpected error occurred" });
             return;
         }
         if (rs.statusCode < 200 || rs.statusCode > 230) {
-            res.status(rs.statusCode).json({error: "got non-ok status code from OSM (auth)", code: rs.statusCode, msg: body});
+            res.status(rs.statusCode).json({
+                error: "got non-ok status code from OSM (auth)",
+                code: rs.statusCode,
+                msg: body
+            });
             return;
         }
 
@@ -125,18 +133,24 @@ app.get("/auth", (req, res) => {
 
 });
 
+app.get("/auth2", (req, res) => {
+    console.log("GET /auth2")
+
+    res.redirect(vars.auth2Url + "?client_id=" + vars.osmClientId + "&redirect_uri=" + encodeURIComponent(vars.callback2Url) + "&response_type=code&scope=read_prefs%20write_api");
+});
+
 app.get("/callback", (req, res) => {
     console.log("GET /callback")
     if (!req.session.oauth_token_secret) {
-        res.status(401).json({error: "invalid session (missing secret)"});
+        res.status(401).json({ error: "invalid session (missing secret)" });
         return;
     }
     if (!req.query.oauth_token) {
-        res.status(400).json({error: "missing oauth token"});
+        res.status(400).json({ error: "missing oauth token" });
         return;
     }
     if (!req.query.oauth_verifier) {
-        res.status(400).json({error: "missing oauth verifier"});
+        res.status(400).json({ error: "missing oauth verifier" });
         return;
     }
     request({
@@ -152,18 +166,59 @@ app.get("/callback", (req, res) => {
     }, (err, rs, body) => {
         if (err) {
             console.error(err);
-            res.status(500).json({error: "unexpected error occurred"});
+            res.status(500).json({ error: "unexpected error occurred" });
             return;
         }
         console.debug(body)
         if (rs.statusCode < 200 || rs.statusCode > 230) {
-            res.status(rs.statusCode).json({error: "got non-ok status code from OSM (auth callback)", code: rs.statusCode, msg: body});
+            res.status(rs.statusCode).json({
+                error: "got non-ok status code from OSM (auth callback)",
+                code: rs.statusCode,
+                msg: body
+            });
             return;
         }
 
         let bodyObject = qs.parse(body);
         req.session.access_token = bodyObject.oauth_token; // Save the access token and access secret in the user's session.
         req.session.access_token_secret = bodyObject.oauth_token_secret;
+
+        //TODO
+        res.redirect("https://osmbridge.trashapp.cc/appAuthCallback");
+    });
+});
+
+app.get("/callback2", (req, res) => {
+    console.log("GET /callback2")
+    console.log(req.query)
+    request({
+        method: "POST",
+        url: vars.token2Url,
+        form: {
+            client_id: vars.osmClientId,
+            client_secret: vars.osmClientSecret,
+            code: req.query.code,
+            grant_type: "authorization_code",
+            redirect_uri: vars.callback2Url
+        }
+    }, (err, rs, body) => {
+        if (err) {
+            console.error(err);
+            res.status(500).json({ error: "unexpected error occurred" });
+            return;
+        }
+        console.debug(body)
+        if (rs.statusCode < 200 || rs.statusCode > 230) {
+            res.status(rs.statusCode).json({
+                error: "got non-ok status code from OSM (oauth2 callback)",
+                code: rs.statusCode,
+                msg: body
+            });
+            return;
+        }
+
+        let bodyObject = qs.parse(body);
+        req.session.access_token = bodyObject.access_token; // Save the access token and access secret in the user's session.
 
         //TODO
         res.redirect("https://osmbridge.trashapp.cc/appAuthCallback");
@@ -203,11 +258,15 @@ app.get("/userinfo", (req, res) => {
     }, (err, rs, body) => {
         if (err) {
             console.error(err);
-            res.status(500).json({error: "unexpected error occurred"});
+            res.status(500).json({ error: "unexpected error occurred" });
             return;
         }
         if (rs.statusCode < 200 || rs.statusCode > 230) {
-            res.status(rs.statusCode).json({error: "got non-ok status code from OSM (userinfo)", coed: rs.statusCode, msg: body});
+            res.status(rs.statusCode).json({
+                error: "got non-ok status code from OSM (userinfo)",
+                coed: rs.statusCode,
+                msg: body
+            });
             return;
         }
 
@@ -235,12 +294,12 @@ app.get("/userinfo", (req, res) => {
 app.post("/create", (req, res) => {
     console.log("POST /create")
     if (!req.session.access_token || !req.session.access_token_secret) {
-        res.status(403).json({error: "Not authorized"});
+        res.status(403).json({ error: "Not authorized" });
         return;
     }
 
     if (!req.body) {
-        res.status(400).json({error: "missing body"});
+        res.status(400).json({ error: "missing body" });
         return;
     }
 
@@ -253,14 +312,14 @@ app.post("/create", (req, res) => {
 
     let comment = req.body.comment;
     if (!comment) {
-        res.status(400).json({error: "missing comment"});
+        res.status(400).json({ error: "missing comment" });
         return;
     }
     console.log("Comment: \"" + comment + "\"");
 
     let trashcans = req.body.trashcans;
     if (!trashcans || trashcans.length === 0) {
-        res.status(400).json({error: "trashcans cannot be missing/empty"});
+        res.status(400).json({ error: "trashcans cannot be missing/empty" });
         return;
     }
     console.log("Trashcans: " + JSON.stringify(trashcans));
@@ -269,7 +328,7 @@ app.post("/create", (req, res) => {
     fs.readFile("./create_changeset.xml", "utf8", (err, createChangesetData) => {
         if (err) {
             console.error("Failed to read changeset template", err);
-            res.status(500).json({error: "unexpected error occurred while loading changeset template"});
+            res.status(500).json({ error: "unexpected error occurred while loading changeset template" });
             return;
         }
 
@@ -289,15 +348,19 @@ app.post("/create", (req, res) => {
                 token: req.session.access_token,
                 token_secret: req.session.access_token_secret
             },
-            headers: {"Content-Type": "text/xml"}
+            headers: { "Content-Type": "text/xml" }
         }, function (err, rs, body) {
             if (err) {
                 console.error(err);
-                res.status(500).json({error: "unexpected error occurred while creating changeset"});
+                res.status(500).json({ error: "unexpected error occurred while creating changeset" });
                 return;
             }
             if (rs.statusCode < 200 || rs.statusCode > 230) {
-                res.status(rs.statusCode).json({error: "got non-ok status code from OSM (create changeset)", code: rs.statusCode, msg: body});
+                res.status(rs.statusCode).json({
+                    error: "got non-ok status code from OSM (create changeset)",
+                    code: rs.statusCode,
+                    msg: body
+                });
                 return;
             }
 
@@ -307,14 +370,14 @@ app.post("/create", (req, res) => {
             fs.readFile("./upload_changes.xml", "utf8", (err, uploadChangesData) => {
                 if (err) {
                     console.error("Failed to read changes template", err);
-                    res.status(500).json({error: "unexpected error occurred while loading changes template"});
+                    res.status(500).json({ error: "unexpected error occurred while loading changes template" });
                     return;
                 }
 
                 fs.readFile("./create_node.xml", "utf8", (err, createNodeData) => {
                     if (err) {
                         console.error("Failed to read node template", err);
-                        res.status(500).json({error: "unexpected error occurred while loading node template"});
+                        res.status(500).json({ error: "unexpected error occurred while loading node template" });
                         return;
                     }
 
@@ -356,7 +419,7 @@ app.post("/create", (req, res) => {
 
                     if (createNodes.length === 0) {
                         console.warn("Parsed array is empty! Aborting!");
-                        res.status(400).json({error: "Failed to parse any of the submitted trashcans"});
+                        res.status(400).json({ error: "Failed to parse any of the submitted trashcans" });
                         return;
                     }
 
@@ -376,15 +439,19 @@ app.post("/create", (req, res) => {
                             token: req.session.access_token,
                             token_secret: req.session.access_token_secret
                         },
-                        headers: {"Content-Type": "text/xml"}
+                        headers: { "Content-Type": "text/xml" }
                     }, function (err, rs, body) {
                         if (err) {
                             console.error(err);
-                            res.status(500).json({error: "unexpected error occurred while uploading changeset"});
+                            res.status(500).json({ error: "unexpected error occurred while uploading changeset" });
                             return;
                         }
                         if (rs.statusCode < 200 || rs.statusCode > 230) {
-                            res.status(rs.statusCode).json({error: "got non-ok status code from OSM (upload changeset)", code: rs.statusCode, msg: body});
+                            res.status(rs.statusCode).json({
+                                error: "got non-ok status code from OSM (upload changeset)",
+                                code: rs.statusCode,
+                                msg: body
+                            });
                             return;
                         }
 
@@ -394,7 +461,7 @@ app.post("/create", (req, res) => {
                         parseXmlString(body, function (err, parsed) {
                             if (err) {
                                 console.warn(err);
-                                res.status(500).json({error: "failed to parse xml response"});
+                                res.status(500).json({ error: "failed to parse xml response" });
                                 return;
                             }
                             console.log(JSON.stringify(parsed));
@@ -419,22 +486,26 @@ app.post("/create", (req, res) => {
                                     token: req.session.access_token,
                                     token_secret: req.session.access_token_secret
                                 },
-                                headers: {"Content-Type": "text/xml"}
+                                headers: { "Content-Type": "text/xml" }
                             }, function (err, rs, body) {
                                 if (err) {
                                     console.error(err);
-                                    res.status(500).json({error: "unexpected error occurred while closing changeset"});
+                                    res.status(500).json({ error: "unexpected error occurred while closing changeset" });
                                     return;
                                 }
                                 if (rs.statusCode < 200 || rs.statusCode > 230) {
-                                    res.status(rs.statusCode).json({error: "got non-ok status code from OSM (close changeset)", code: rs.statusCode, msg: body});
+                                    res.status(rs.statusCode).json({
+                                        error: "got non-ok status code from OSM (close changeset)",
+                                        code: rs.statusCode,
+                                        msg: body
+                                    });
                                     return;
                                 }
 
                                 console.log("Closed changeset #" + changesetId);
                                 console.log("==============================")
 
-                                res.json({msg: "success", dev: vars.dev, changeset: changesetId, nodes: newNodeIds});
+                                res.json({ msg: "success", dev: vars.dev, changeset: changesetId, nodes: newNodeIds });
                                 console.log(" ");
                             });
                         });
@@ -454,7 +525,7 @@ app.post("/interpreter", (req, res) => {
     let rqst = request({
         method: "POST",
         url: "https://www.overpass-api.de/api/interpreter"
-    },function (error, response, body) {
+    }, function (error, response, body) {
         console.error('error:', error); // Print the error if one occurred
         console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
         // console.log('body:', body); // Print the HTML for the Google homepage.

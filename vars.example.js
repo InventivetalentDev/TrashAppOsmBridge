@@ -12,7 +12,11 @@ module.exports = {
     accessUrl: DEV ? "https://master.apis.dev.openstreetmap.org/oauth/access_token" : "https://www.openstreetmap.org/oauth/access_token",
     authUrl: DEV ? "https://master.apis.dev.openstreetmap.org/oauth/authorize" : "https://www.openstreetmap.org/oauth/authorize",
 
+    auth2Url: DEV ? "https://master.apis.dev.openstreetmap.org/oauth2/authorize" : "https://www.openstreetmap.org/oauth2/authorize",
+    token2Url: DEV ? "https://master.apis.dev.openstreetmap.org/oauth2/token" : "https://www.openstreetmap.org/oauth2/token",
+
     callbackUrl: "https://osmbridge.trashapp.cc/callback",
+    callback2Url: "https://osmbridge.trashapp.cc/callback2",
 
     osmKey: DEV ? "xxx" : "xxx",
     osmSecret: DEV ? "xxx" : "xxx",
