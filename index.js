@@ -53,17 +53,12 @@ app.get('/', (req, res) => {
         });
     }
 
-    if (req.session.access_token && req.session.access_token_secret) {
+    if (req.session.access_token) {
         request({
             url: vars.osmUrl + "/api/0.6/user/details",
             method: "GET",
-            oauth: {
-                consumer_key: vars.osmKey, // Supply the consumer key, consumer secret, access token and access secret for every request to the API.
-                consumer_secret: vars.osmSecret,
-                token: req.session.access_token,
-                token_secret: req.session.access_token_secret
-            },
             headers: {
+                "Authorization": "Bearer " + req.session.access_token, // Supply the access token as a Bearer token in the Authorization header.
                 "content-type": "text/xml" // Don't forget to set the content type as XML.
             }
         }, (err, rs, body) => {
@@ -99,8 +94,9 @@ app.get('/', (req, res) => {
 
 /// Auth Stuff
 
-app.get("/auth", (req, res) => {
-    console.log("GET /auth")
+// deprecated
+app.get("/auth1", (req, res) => {
+    console.log("GET /auth1")
     // https://wiki.openstreetmap.org/wiki/OAuth_Server_side_Node.js_examples
 
     request.post({
@@ -133,13 +129,13 @@ app.get("/auth", (req, res) => {
 
 });
 
-app.get("/auth2", (req, res) => {
-    console.log("GET /auth2")
+app.get("/auth", (req, res) => {
+    console.log("GET /auth")
 
     res.redirect(vars.auth2Url + "?client_id=" + vars.osmClientId + "&redirect_uri=" + encodeURIComponent(vars.callback2Url) + "&response_type=code&scope=read_prefs%20write_api");
 });
 
-app.get("/callback", (req, res) => {
+app.get("/callback1", (req, res) => {
     console.log("GET /callback")
     if (!req.session.oauth_token_secret) {
         res.status(401).json({ error: "invalid session (missing secret)" });
@@ -190,7 +186,6 @@ app.get("/callback", (req, res) => {
 
 app.get("/callback2", (req, res) => {
     console.log("GET /callback2")
-    console.log(req.query)
     request({
         method: "POST",
         url: vars.token2Url,
@@ -217,7 +212,7 @@ app.get("/callback2", (req, res) => {
             return;
         }
 
-        let bodyObject = qs.parse(body);
+        let bodyObject = JSON.parse(body);
         req.session.access_token = bodyObject.access_token; // Save the access token and access secret in the user's session.
 
         //TODO
@@ -246,13 +241,8 @@ app.get("/userinfo", (req, res) => {
     request({
         url: vars.osmUrl + "/api/0.6/user/details",
         method: "GET",
-        oauth: {
-            consumer_key: vars.osmKey, // Supply the consumer key, consumer secret, access token and access secret for every request to the API.
-            consumer_secret: vars.osmSecret,
-            token: req.session.access_token,
-            token_secret: req.session.access_token_secret
-        },
         headers: {
+            "Authorization": "Bearer " + req.session.access_token, // Supply the access token as a Bearer token in the Authorization header.
             "content-type": "text/xml" // Don't forget to set the content type as XML.
         }
     }, (err, rs, body) => {
@@ -342,13 +332,10 @@ app.post("/create", (req, res) => {
             url: vars.osmUrl + "/api/0.6/changeset/create",
             method: "PUT",
             body: createChangeset,
-            oauth: {
-                consumer_key: vars.osmKey, // Supply the consumer key, consumer secret, access token and access secret for every request to the API.
-                consumer_secret: vars.osmSecret,
-                token: req.session.access_token,
-                token_secret: req.session.access_token_secret
-            },
-            headers: { "Content-Type": "text/xml" }
+            headers: {
+                "Authorization": "Bearer " + req.session.access_token, // Supply the access token as a Bearer token in the Authorization header.
+                "Content-Type": "text/xml"
+            }
         }, function (err, rs, body) {
             if (err) {
                 console.error(err);
@@ -433,13 +420,10 @@ app.post("/create", (req, res) => {
                         url: vars.osmUrl + "/api/0.6/changeset/" + changesetId + "/upload",
                         method: "POST",
                         body: uploadChanges,
-                        oauth: {
-                            consumer_key: vars.osmKey, // Supply the consumer key, consumer secret, access token and access secret for every request to the API.
-                            consumer_secret: vars.osmSecret,
-                            token: req.session.access_token,
-                            token_secret: req.session.access_token_secret
-                        },
-                        headers: { "Content-Type": "text/xml" }
+                        headers: {
+                            "Authorization": "Bearer " + req.session.access_token, // Supply the access token as a Bearer token in the Authorization header.
+                            "Content-Type": "text/xml"
+                        }
                     }, function (err, rs, body) {
                         if (err) {
                             console.error(err);
@@ -480,13 +464,10 @@ app.post("/create", (req, res) => {
                             request({
                                 url: vars.osmUrl + "/api/0.6/changeset/" + changesetId + "/close",
                                 method: "PUT",
-                                oauth: {
-                                    consumer_key: vars.osmKey, // Supply the consumer key, consumer secret, access token and access secret for every request to the API.
-                                    consumer_secret: vars.osmSecret,
-                                    token: req.session.access_token,
-                                    token_secret: req.session.access_token_secret
-                                },
-                                headers: { "Content-Type": "text/xml" }
+                                headers: {
+                                    "Authorization": "Bearer " + req.session.access_token, // Supply the access token as a Bearer token in the Authorization header.
+                                    "Content-Type": "text/xml"
+                                }
                             }, function (err, rs, body) {
                                 if (err) {
                                     console.error(err);
