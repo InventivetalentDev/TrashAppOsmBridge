@@ -451,18 +451,22 @@ app.post("/create", (req, res) => {
 // proxy for overpass
 app.post("/interpreter", (req, res) => {
     console.log("proxying interpreter from " + req.header("User-Agent") + " " + getIp(req));
-    req.pipe(request({
-            method: "POST",
-            url: "https://www.overpass-api.de/api/interpreter"
-        })
-            .on('response', function (response) {
-                console.log(response.statusCode) // 200
-            })
-            .on('error', function (err) {
-                console.warn("interpreter error");
-                console.error(err)
-            })
-    ).pipe(res)
+    let rqst = request({
+        method: "POST",
+        url: "https://www.overpass-api.de/api/interpreter"
+    },function (error, response, body) {
+        console.error('error:', error); // Print the error if one occurred
+        console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received
+        // console.log('body:', body); // Print the HTML for the Google homepage.
+    })
+        // .on('response', function (response, body) {
+        //     console.log(response.statusCode)
+        // })
+        .on('error', function (err) {
+            console.warn("interpreter error");
+            console.error(err)
+        });
+    req.pipe(rqst).pipe(res);
 })
 
 function getIp(req) {
