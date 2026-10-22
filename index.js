@@ -1,4 +1,4 @@
-const vars = require("./vars");
+const vars = require("./config");
 // require("./logToFile");
 
 const fs = require('fs');
@@ -25,7 +25,7 @@ app.use(bodyParser.json());
 
 console.log("hi!")
 
-const port = 8689;
+const port = vars.port;
 
 app.use("/.well-known", express.static(".well-known"));
 
@@ -180,7 +180,7 @@ app.get("/callback1", (req, res) => {
         req.session.access_token_secret = bodyObject.oauth_token_secret;
 
         //TODO
-        res.redirect("https://osmbridge.trashapp.cc/appAuthCallback");
+        res.redirect(vars.publicUrl + "/appAuthCallback");
     });
 });
 
@@ -188,7 +188,7 @@ app.get("/callback2", (req, res) => {
     console.log("GET /callback2 - " + req.header("User-Agent") + " " + getIp(req))
     if (!req.query.code) {
         console.warn("Missing code!");
-        res.redirect("https://osmbridge.trashapp.cc/appAuthErrorCallback?message=missing%20code");
+        res.redirect(vars.publicUrl + "/appAuthErrorCallback?message=missing%20code");
         return;
     }
     request({
@@ -205,7 +205,7 @@ app.get("/callback2", (req, res) => {
         if (err) {
             console.error(err);
             // res.status(500).json({ error: "unexpected error occurred" });
-            res.redirect("https://osmbridge.trashapp.cc/appAuthErrorCallback?message=unexpected%20error");
+            res.redirect(vars.publicUrl + "/appAuthErrorCallback?message=unexpected%20error");
             return;
         }
         console.debug(body)
@@ -215,7 +215,7 @@ app.get("/callback2", (req, res) => {
             //     code: rs.statusCode,
             //     msg: body
             // });
-            res.redirect("https://osmbridge.trashapp.cc/appAuthErrorCallback?message=non-ok%20status%20code%20(" + rs.statusCode + ")");
+            res.redirect(vars.publicUrl + "/appAuthErrorCallback?message=non-ok%20status%20code%20(" + rs.statusCode + ")");
             return;
         }
 
@@ -223,7 +223,7 @@ app.get("/callback2", (req, res) => {
         req.session.access_token = bodyObject.access_token; // Save the access token and access secret in the user's session.
 
         //TODO
-        res.redirect("https://osmbridge.trashapp.cc/appAuthCallback");
+        res.redirect(vars.publicUrl + "/appAuthCallback");
     });
 });
 
@@ -529,7 +529,7 @@ app.post("/interpreter", (req, res) => {
     console.log("proxying interpreter from " + req.header("User-Agent") + " " + getIp(req));
     let rqst = request({
         method: "POST",
-        url: "https://www.overpass-api.de/api/interpreter"
+        url: vars.overpassUrl
     }, function (error, response, body) {
         console.error('error:', error); // Print the error if one occurred
         console.log('statusCode:', response && response.statusCode); // Print the response status code if a response was received

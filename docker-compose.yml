@@ -1,0 +1,10 @@
+services:
+  osmbridge:
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file: .env
+    ports:
+      - "${PORT:-8689}:${PORT:-8689}"
+    # volumes:
+    #   - ./.well-known:/app/.well-known:ro
